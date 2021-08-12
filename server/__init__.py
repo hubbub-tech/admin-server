@@ -10,8 +10,8 @@ def create_app():
     # Flask Config
     app.config.from_object(config_object)
 
-    from .routes import manage_couriers, manage_items, manage_orders
-    app.register_blueprint(manage_couriers)
+    from .routes import manage_tasks, manage_items, manage_orders
+    app.register_blueprint(manage_tasks)
     app.register_blueprint(manage_items)
     app.register_blueprint(manage_orders)
 
