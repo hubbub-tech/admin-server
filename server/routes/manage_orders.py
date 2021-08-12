@@ -42,14 +42,20 @@ def order_summary(order_id):
     for extension in extensions:
         extensions_to_dict.append(extension.to_dict())
         reservations_to_dict.append(extension.reservation.to_dict())
+
+    order_to_dict = order.to_dict()
     if dropoff:
         order_to_dict["dropoff"] = dropoff.to_dict()
         order_to_dict["dropoff"]["logistics"] = dropoff.logistics.to_dict()
+    else:
+        order_to_dict["dropoff"] = None
+
     if pickup:
         order_to_dict["pickup"] = pickup.to_dict()
         order_to_dict["pickup"]["logistics"] = pickup.logistics.to_dict()
+    else:
+        order_to_dict["pickup"] = None
 
-    order_to_dict = order.to_dict()
     order_to_dict["ext_date_start"] = order.ext_date_start.strftime("%Y-%m-%d")
     order_to_dict["ext_date_end"] = order.ext_date_end.strftime("%Y-%m-%d")
 
@@ -68,28 +74,3 @@ def order_summary(order_id):
         "order": order_to_dict,
         "photo_url": photo_url
     }
-
-@bp.post('/order/dropoff/confirm/id=<int:order_id>')
-def confirm_order_dropoff(order_id):
-    flashes = []
-    order = Orders.get(order_id)
-    dropoff = Dropoffs.by_order(order)
-    if dropoff:
-        pass
-        #TODO: set the chosen time for dropoff
-        #TODO: making it available for couriers
-    else:
-        flashes.append(["The renter has not completed their dropoff scheduling yet."])
-    return {}, 201
-
-@bp.post('/order/pickup/confirm/id=<int:order_id>')
-def confirm_order_pickup(order_id):
-    order = Orders.get(order_id)
-    pickup = Pickups.by_order(order)
-    if pickup:
-        pass
-        #TODO: set the chosen time for pickup
-        #TODO: making it available for couriers
-    else:
-        flashes.append(["The renter has not completed their pickup scheduling yet."])
-    return {}, 201
