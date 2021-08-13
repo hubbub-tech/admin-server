@@ -3,7 +3,7 @@ from blubber_orm import Dropoffs, Pickups, Logistics
 
 def complete_task(order, task):
     is_valid = False
-    message = f"The task on order #{order.id} for the {item.name} has failed."
+    message = f"The task on order #{order.id} has failed."
     if isinstance(task, Dropoffs):
         Dropoffs.mark_as_delivered(order)
     elif isinstance(task, Pickups):
@@ -17,7 +17,7 @@ def complete_task(order, task):
         "address_zip": task.logistics.address.zip_code
     })
     is_valid = True
-    message = f"The task on order #{order.id} for the {item.name} has been completed."
+    message = f"The task on order #{order.id} has been completed."
     return {
         "is_valid": is_valid,
         "message": message

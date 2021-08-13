@@ -24,12 +24,14 @@ def tasks():
     for dropoff in all_dropoffs:
         if dropoff.dropoff_date > date.today():
             task = create_task(dropoff=dropoff)
-            tasks.append(task)
+            if task["is_complete"] == False:
+                tasks.append(task)
 
     for pickup in all_pickups:
         if pickup.pickup_date > date.today():
             task = create_task(pickup=pickup)
-            tasks.append(task)
+            if task["is_complete"] == False:
+                tasks.append(task)
 
     json_sort(tasks, "task_date")
     return {"tasks": tasks}
@@ -51,6 +53,7 @@ def set_task_time():
         }
         update_time = {"chosen_time": chosen_time}
         Logistics.set(logistics_keys, update_time)
+        #TODO: send an email with the chosen time to parties involved
         return {"flashes": [f"The time you chose, {chosen_time_json} for {task['type']} on {task['task_date']} has been set successfully."]}, 200
     return {"flashes": ["This task cannot be completed."]}, 406
 
@@ -62,7 +65,7 @@ def task_dropoff(order_id):
         if dropoff.dropoff_date > date.today():
             task = create_task(dropoff=dropoff)
             return {"task": task}
-    return {"flashes": ["This task is not ready to complete."]}
+    return {"flashes": ["This task is not ready to complete."]}, 406
 
 @bp.get('/task/pickup/id=<int:order_id>')
 def task_pickup(order_id):
@@ -72,7 +75,7 @@ def task_pickup(order_id):
         if pickup.pickup_date > date.today():
             task = create_task(pickup=pickup)
             return {"task": task}
-    return {"flashes": ["This task is not ready to complete."]}
+    return {"flashes": ["This task is not ready to complete."]}, 406
 
 @bp.post('/task/dropoff/complete')
 def complete_task_dropoff():
@@ -88,7 +91,8 @@ def complete_task_dropoff():
             "dropoff_date": dropoff_date,
             "renter_id": task["logistics"]["renter_id"]
         })
-        for order in task["orders"]:
+        for order_dict in task["orders"]:
+            order = Orders.get(order_dict["id"])
             response = complete_task(order, dropoff)
             if response["is_valid"] == False:
                 return {"flashes": [response["message"]]}, 406
@@ -109,7 +113,8 @@ def complete_task_pickup():
             "pickup_date": pickup_date,
             "renter_id": task["logistics"]["renter_id"]
         })
-        for order in task["orders"]:
+        for order_dict in task["orders"]:
+            order = Orders.get(order_dict["id"])
             response = complete_task(order, pickup)
             if response["is_valid"] == False:
                 return {"flashes": [response["message"]]}, 406

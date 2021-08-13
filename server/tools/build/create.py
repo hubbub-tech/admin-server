@@ -12,10 +12,12 @@ def create_task(dropoff=None, pickup=None):
         task["task_date"] = dropoff.dropoff_date.strftime("%Y-%m-%d")
         task["address"] = dropoff.logistics.address.to_dict()
         task["logistics"] = dropoff.logistics.to_dict()
+        task["is_complete"] = True
 
         renter = Users.get(dropoff.renter_id)
         task["renter"] = renter.to_dict()
         task["renter"]["name"] = renter.name
+        task["renter"]["profile"] = renter.profile.to_dict()
         task["orders"] = []
         orders = Orders.by_dropoff(dropoff)
         if orders:
@@ -26,6 +28,8 @@ def create_task(dropoff=None, pickup=None):
                 order_to_dict["item"]["details"] = item.details.to_dict()
                 order_to_dict["reservation"] = order.reservation.to_dict()
                 task["orders"].append(order_to_dict)
+                if Dropoffs.dt_completed(order) is None:
+                    task["is_complete"] = False
         else:
             raise Exception("ERROR: why is there a dropoff without an order?")
     elif isinstance(pickup, Pickups):
@@ -34,10 +38,12 @@ def create_task(dropoff=None, pickup=None):
         task["task_date"] = pickup.pickup_date.strftime("%Y-%m-%d")
         task["address"] = pickup.logistics.address.to_dict()
         task["logistics"] = pickup.logistics.to_dict()
+        task["is_complete"] = True
 
         renter = Users.get(pickup.renter_id)
         task["renter"] = renter.to_dict()
         task["renter"]["name"] = renter.name
+        task["renter"]["profile"] = renter.profile.to_dict()
         task["orders"] = []
         orders = Orders.by_pickup(pickup)
         if orders:
@@ -48,6 +54,8 @@ def create_task(dropoff=None, pickup=None):
                 order_to_dict["item"]["details"] = item.details.to_dict()
                 order_to_dict["reservation"] = order.reservation.to_dict()
                 task["orders"].append(order_to_dict)
+                if Pickups.dt_completed(order) is None:
+                    task["is_complete"] = False
         else:
             raise Exception("ERROR: why is there a dropoff without an order?")
     else:
