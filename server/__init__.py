@@ -10,6 +10,10 @@ def create_app():
     # Flask Config
     app.config.from_object(config_object)
 
+    # Celery Worker Config
+    from .tools.settings import celery
+    celery.conf.update(app.config)
+
     from .routes import manage_tasks, manage_items, manage_orders
     app.register_blueprint(manage_tasks)
     app.register_blueprint(manage_items)
