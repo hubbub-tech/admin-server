@@ -74,3 +74,11 @@ def order_summary(order_id):
         "order": order_to_dict,
         "photo_url": photo_url
     }
+
+@bp.get('/commands/reminder/pickup')
+def pickup_reminder_command():
+    return {"flashes": ["Emails bulk sent!"]}, 200
+
+@bp.get('/commands/reminder/dropoff')
+def dropoff_reminder_command():
+    return {"flashes": ["Emails bulk sent!"]}, 200
