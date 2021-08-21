@@ -52,6 +52,26 @@ class AWSConfig:
         url = "/".join([AWSConfig.S3_LINK, path])
         return url
 
+class MailConfig:
+    _instance = None
+    DEFAULT_SENDER = None
+    SENDGRID_API_KEY = None
+
+    def __init__(self):
+        if MailConfig._instance:
+            #TODO: log that this problem happened
+            raise Exception("MAIL CLIENT Connection should only be created once in the app.")
+        else:
+            MailConfig.DEFAULT_SENDER = os.environ["MAIL_DEFAULT_SENDER"]
+            MailConfig.SENDGRID_API_KEY = os.environ["SENDGRID_API_KEY"]
+            MailConfig._instance = self
+
+    @staticmethod
+    def get_instance():
+        if MailConfig._instance is None:
+            MailConfig()
+        return MailConfig._instance
+
 #FLASK CONFIGS------------------------------------
 
 class Config:
