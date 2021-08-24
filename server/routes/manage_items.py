@@ -5,13 +5,18 @@ from blubber_orm import Orders, Users, Reservations
 from blubber_orm import Items, Details, Calendars, Tags
 from blubber_orm import Dropoffs, Pickups
 
+from server.tools.settings import login_required
 from server.tools.settings import Config, AWS
 from server.tools.settings import json_sort
 
 bp = Blueprint('manage_items', __name__)
-CORS(bp, origins=[Config.CORS_ALLOW_ORIGINS["admin"]])
+CORS(bp,
+    origins=[Config.CORS_ALLOW_ORIGINS["admin"]],
+    supports_credentials=Config.CORS_SUPPORTS_CREDENTIALS
+)
 
 @bp.get("/items")
+@login_required
 def items():
     items = []
     db_items = Items.get_all()
@@ -32,6 +37,7 @@ def items():
     return {"items": items}
 
 @bp.get("/item/history/id=<int:item_id>")
+@login_required
 def item_history(item_id):
     photo_url = AWS.get_url("items")
     item = Items.get(item_id)
@@ -62,6 +68,7 @@ def item_history(item_id):
     }
 
 @bp.post("/item/hide/id=<int:item_id>")
+@login_required
 def hide_item(item_id):
     code = 406
     flashes = []
@@ -79,6 +86,7 @@ def hide_item(item_id):
     return {"flashes": flashes}, code
 
 @bp.post("/item/feature/id=<int:item_id>")
+@login_required
 def feature_item(item_id):
     code = 406
     flashes = []
@@ -96,6 +104,7 @@ def feature_item(item_id):
     return {"flashes": flashes}, code
 
 @bp.post("/item/edit/id=<int:item_id>/submit")
+@login_required
 def edit_item_submit(item_id):
     flashes = []
     data = request.form
@@ -127,6 +136,7 @@ def edit_item_submit(item_id):
     return {"flashes": flashes}, code
 
 @bp.post("/item/address/id=<int:item_id>/submit")
+@login_required
 def edit_item_address_submit(item_id):
     flashes = []
     data = request.json

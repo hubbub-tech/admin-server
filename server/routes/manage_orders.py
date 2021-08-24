@@ -4,13 +4,18 @@ from flask_cors import CORS
 from blubber_orm import Orders, Users, Reservations, Items
 from blubber_orm import Dropoffs, Pickups
 
+from server.tools.settings import login_required
 from server.tools.settings import Config, AWS
 from server.tools.settings import json_sort
 
 bp = Blueprint('manage_orders', __name__)
-CORS(bp, origins=[Config.CORS_ALLOW_ORIGINS["admin"]])
+CORS(bp,
+    origins=[Config.CORS_ALLOW_ORIGINS["admin"]],
+    supports_credentials=Config.CORS_SUPPORTS_CREDENTIALS
+)
 
 @bp.get('/orders')
+@login_required
 def orders():
     orders = []
     db_orders = Orders.get_all()
@@ -28,6 +33,7 @@ def orders():
     return {"orders": orders}
 
 @bp.get('/order/summary/id=<int:order_id>')
+@login_required
 def order_summary(order_id):
     photo_url = AWS.get_url("items")
     order = Orders.get(order_id)
@@ -76,9 +82,11 @@ def order_summary(order_id):
     }
 
 @bp.get('/commands/reminder/pickup')
+@login_required
 def pickup_reminder_command():
     return {"flashes": ["Emails bulk sent!"]}, 200
 
 @bp.get('/commands/reminder/dropoff')
+@login_required
 def dropoff_reminder_command():
     return {"flashes": ["Emails bulk sent!"]}, 200
