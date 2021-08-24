@@ -81,6 +81,7 @@ class Config:
 
     #Celery
     OPERATIONS_APIKEY = os.environ['OPERATIONS_APIKEY']
+    CORS_SUPPORTS_CREDENTIALS = True
     CORS_ALLOW_ORIGINS = {
         "admin": os.environ['ADMIN_CORS_ORIGIN'],
         "shop": os.environ['SHOP_CORS_ORIGIN']
