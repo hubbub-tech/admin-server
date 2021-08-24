@@ -5,36 +5,94 @@ def get_task_time_email(task, chosen_time):
     frame_data["preview"] = f"Your {task['type']} time has been set for {chosen_time.strftime('%I:%M:00 %p')} - "
     frame_data["user"] = task["renter"]["name"]
     frame_data["introduction"] = f"""
-        Thanks for scheduling your {task['type']}! We have scheduled a specific time
-        for your rental. See the table below.
+        Thanks for submitting your availability! We have scheduled a specific time
+        for your {task['type']}. See the information below for details.
         """
     frame_data["content"] = get_task_update_table(task, chosen_time)
+
+    total_tax = 0
+    total_deposit = 0
+    total_charge = 0
+    for order in task["orders"]:
+        reservation = order["reservation"]
+        total_tax += reservation["tax"]
+        total_deposit += reservation["deposit"]
+        total_charge += reservation["charge"]
     if task['type'] == "pickup":
+        charge = "" #"Your deposit will be returned at pickup."
         clause = """
-            Also, please make sure each item is in a clean and usable state upon
-            pick-up, charges may be applied otherwise.
+            Please make sure each item is in a clean and usable state upon pickup,
+            charges may be applied otherwise.
             """
     else:
-        total_tax = 0
-        total_deposit = 0
-        total_charge = 0
-        for order in task["orders"]:
-            reservation = order["reservation"]
-            total_tax += reservation["tax"]
-            total_deposit += reservation["deposit"]
-            total_charge += reservation["charge"]
         total = total_tax + total_deposit + total_charge
-        clause = "Upon dropoff, you will be charged a total of ${:,.2f}. The breakdown: ".format(total)
-        clause += "Tax: ${:,.2f}, ".format(total_tax) + "Deposit: ${:,.2f}, ".format(total_deposit) + "Cost: ${:,.2f}.".format(total_charge)
+        charge = "Total due at dropoff: ${:,.2f}".format(total)
+        clause = ""
     frame_data["conclusion"] = f"""
-        Please be prompt, as a $5 {task['type']} attempt charge will be made if you do not show
-        up after 30 minutes. {clause}
+            {charge}
+        </p>
+        <p>
+            We will be sending you a text from our Hubbub phone number (929) 244-0748‬ when we are on
+            our way to you. Feel free to text or call us at that number with any updates or changes
+            on the day of {task['type']}.
+        </p>
+        <p>
+            Please be prompt, as a $5 {task['type']} attempt charge will be made if you do not show
+            up after 30 minutes. {clause}
+        </p>
+        <p>
+            Let us know if anything looks incorrect with the above information or if you have any questions!
         """
     email_data = {}
-    email_data["subject"] = f"[Hubbub] Confirming your {task['type']} time"
+    email_data["subject"] = f"[Hubbub] Confirming your {task['type'].capitalize()} Time"
     email_data["to"] = (task['renter']['email'], "hubbubcu@gmail.com")
     email_data["body"] = email_builder(frame_data)
     email_data["error"] = "TASK-TIME"
+    return email_data
+
+def get_task_confirmation_email(task, address):
+    task_date = datetime.strptime(task["task_date"], "%Y-%m-%d").date()
+    task_date_str = datetime.strftime(task_date, "%B %-d, %Y")
+    item_names = get_linkable_items(task)
+
+    address_formatted = f"{address['num']} {address['street']}, {address['city']} {address['state']}, {address['zip_code']}"
+    frame_data = {}
+    frame_data["preview"] = f"Your {task['type']} has been marked as completed! See this email for verification - "
+    frame_data["user"] = task["renter"]["name"]
+
+    if task['type'] == 'dropoff':
+        intro = f"""
+            This email is to confirm that your rental(s) beginning on {task_date_str}
+            has been dropped off at <strong>{address_formatted}</strong>.
+            """
+        action = "receive"
+    else:
+        intro = f"""
+            This email is to confirm that your rental(s) ending on {task_date_str}
+            has been picked up at <strong>{address_formatted}</strong>.
+            """
+        action = "return"
+    frame_data["introduction"] = intro
+    frame_data["content"] = f"""
+        <p>
+            The item(s) in this rental order were: {item_names}
+        </p>
+        """
+
+    frame_data["conclusion"] = f"""
+            If you or someone you authorized did not {action} the above item(s),
+            please contact us immediately at (929) 244-0748‬ or reply to this email.
+            Otherwise, no action is needed.
+        </p>
+        <p>
+            Please let us know if you ever need anything else!
+        """
+
+    email_data = {}
+    email_data["subject"] = f"[Hubbub] Your {task['type'].capitalize()} has been Completed!"
+    email_data["to"] = (task['renter']['email'], "hubbubcu@gmail.com")
+    email_data["body"] = email_builder(frame_data)
+    email_data["error"] = "TASK-COMPLETED"
     return email_data
 
 #EMAIL HELPERS---------------------------------------
@@ -121,34 +179,34 @@ def get_task_update_table(task, chosen_time):
     task_date = datetime.strptime(task["task_date"], "%Y-%m-%d").date()
     task_date_str = datetime.strftime(task_date, "%B %-d, %Y")
 
-    item_links =[]
-    items = [order["item"] for order in task["orders"]]
-    for item in items:
-        item_links.append(f"<a href='https://www.hubbub.shop/inventory/i/id={item['id']}'>{item['name']}</a>")
+    item_names = get_linkable_items(task)
 
-    item_names = ", ".join(item_links)
     task_table = f"""
         <table>
             <tr>
-                <th>Name</th>
-                <th>Details</th>
-            </tr>
-            <tr>
-                <td>Date for {task['type']}</td>
+                <td>{task['type'].capitalize()} Date</td>
                 <td>{task_date_str}</td>
             </tr>
             <tr>
-                <td>Chosen time</td>
-                <td>{chosen_time.strftime('%I:%M:00 %p')}</td>
+                <td>{task['type'].capitalize()} Time</td>
+                <td>{chosen_time.strftime('%-I:%M %p')}</td>
+            </tr>
+            <tr>
+                <td>{task['type'].capitalize()} Address</td>
+                <td>{task['address']['num']} {task['address']['street']}, {task['address']['city']} {task['address']['state']}, {task['address']['zip_code']}</td>
             </tr>
             <tr>
                 <td>Item(s)</td>
                 <td>{item_names}</td>
             </tr>
         </table>
-        <p>
-        Address for {task['type']}: {task['address']['num']} {task['address']['street']},
-        {task['address']['city']} {task['address']['state']}, {task['address']['zip_code']}
-        </p>
         """
     return task_table
+
+def get_linkable_items(task):
+    item_links =[]
+    items = [order["item"] for order in task["orders"]]
+    for item in items:
+        item_links.append(f"<a href='https://www.hubbub.shop/inventory/i/id={item['id']}'>{item['name']}</a>")
+    item_names = ", ".join(item_links)
+    return item_names
