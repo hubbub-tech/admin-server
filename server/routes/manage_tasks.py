@@ -6,14 +6,20 @@ from datetime import datetime, date, timedelta
 from blubber_orm import Orders, Users, Reservations
 from blubber_orm import Items, Details, Calendars
 from blubber_orm import Dropoffs, Pickups, Logistics
+from blubber_orm import Addresses
 
-from server.tools.build import get_task_time_email, send_async_email
+from server.tools.build import get_task_time_email, get_task_confirmation_email, send_async_email
 from server.tools.build import create_task, complete_task
+
+from server.tools.settings import login_required
 from server.tools.settings import Config, AWS
 from server.tools.settings import json_sort
 
 bp = Blueprint('manage_tasks', __name__)
-CORS(bp, origins=[Config.CORS_ALLOW_ORIGINS["admin"]])
+CORS(bp,
+    origins=[Config.CORS_ALLOW_ORIGINS["admin"]],
+    supports_credentials=Config.CORS_SUPPORTS_CREDENTIALS
+)
 
 @bp.get('/tasks')
 def tasks():
@@ -36,6 +42,7 @@ def tasks():
     return {"tasks": tasks}
 
 @bp.post('/task/chosen-time')
+@login_required
 def set_task_time():
     date_format = "%Y-%m-%d"
     time_format = "%I:%M:00 %p"
@@ -59,6 +66,7 @@ def set_task_time():
     return {"flashes": ["This task cannot be completed."]}, 406
 
 @bp.get('/task/dropoff/id=<int:order_id>')
+@login_required
 def task_dropoff(order_id):
     order = Orders.get(order_id)
     dropoff = Dropoffs.by_order(order)
@@ -69,6 +77,7 @@ def task_dropoff(order_id):
     return {"flashes": ["This task is not ready to complete."]}, 406
 
 @bp.get('/task/pickup/id=<int:order_id>')
+@login_required
 def task_pickup(order_id):
     order = Orders.get(order_id)
     pickup = Pickups.by_order(order)
@@ -79,6 +88,7 @@ def task_pickup(order_id):
     return {"flashes": ["This task is not ready to complete."]}, 406
 
 @bp.post('/task/dropoff/complete')
+@login_required
 def complete_task_dropoff():
     date_format = "%Y-%m-%d"
     datetime_format = "%Y-%m-%d %H:%M:%S.%f"
@@ -98,16 +108,35 @@ def complete_task_dropoff():
             #TODO: youre thing was dropoffed
             if response["is_valid"] == False:
                 return {"flashes": [response["message"]]}, 406
+
+            address_to_dict = task["address"]
+            email_data = get_task_confirmation_email(task, address_to_dict)
+            send_async_email.apply_async(kwargs=email_data)
         return {"flashes": [f"All the orders for {task['type']} on {task['task_date']} have been completed."]}, 200
     return {"flashes": ["This task cannot be completed."]}, 406
 
 @bp.post('/task/pickup/complete')
+@login_required
 def complete_task_pickup():
     date_format = "%Y-%m-%d"
     datetime_format = "%Y-%m-%d %H:%M:%S.%f"
     data = request.json
     if data:
         task = data["task"]
+        address_keys = {
+            "num": data["address"]["num"],
+            "street": data["address"]["street"],
+            "city": data["address"]["city"],
+            "zip": data["address"]["zip_code"],
+            "state": data["address"]["state"],
+            "apt": data["address"]["apt"],
+        }
+        address = Addresses.filter(address_keys)
+        if address:
+            address, = address
+        else:
+            address = Addresses.insert(address_keys)
+
         pickup_date = datetime.strptime(task["task_date"], date_format).date()
         dt_sched = datetime.strptime(task["logistics"]["dt_scheduled"], datetime_format)
         pickup = Pickups.get({
@@ -117,9 +146,13 @@ def complete_task_pickup():
         })
         for order_dict in task["orders"]:
             order = Orders.get(order_dict["id"])
-            response = complete_task(order, pickup)
+            response = complete_task(order, pickup, address)
             #TODO: youre thing was pickuped
             if response["is_valid"] == False:
                 return {"flashes": [response["message"]]}, 406
+
+            address_to_dict = address.to_dict()
+            email_data = get_task_confirmation_email(task, address_to_dict)
+            send_async_email.apply_async(kwargs=email_data)
         return {"flashes": [f"All the orders for {task['type']} on {task['task_date']} have been completed."]}, 200
     return {"flashes": ["This task cannot be completed."]}, 406
