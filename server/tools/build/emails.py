@@ -25,8 +25,8 @@ def get_task_time_email(task, chosen_time):
             charges may be applied otherwise.
             """
     else:
-        total = total_tax + total_deposit + total_charge
-        charge = "Total due at dropoff: ${:,.2f}".format(total)
+        total = round(total_tax + total_deposit + total_charge, 2)
+        charge = f"Total due at dropoff: ${total}"
         clause = ""
     frame_data["conclusion"] = f"""
             {charge}
@@ -45,6 +45,55 @@ def get_task_time_email(task, chosen_time):
         """
     email_data = {}
     email_data["subject"] = f"[Hubbub] Confirming your {task['type'].capitalize()} Time"
+    email_data["to"] = (task['renter']['email'], "hubbubcu@gmail.com")
+    email_data["body"] = email_builder(frame_data)
+    email_data["error"] = "TASK-TIME"
+    return email_data
+
+def update_task_time_email(task, chosen_time):
+    frame_data = {}
+    frame_data["preview"] = f"Your {task['type']} time has been updated to {chosen_time.strftime('%I:%M:00 %p')} - "
+    frame_data["user"] = task["renter"]["name"]
+    frame_data["introduction"] = f"""
+        We have updated your {task['type']} time. See the information below for details.
+        """
+    frame_data["content"] = get_task_update_table(task, chosen_time)
+
+    total_tax = 0
+    total_deposit = 0
+    total_charge = 0
+    for order in task["orders"]:
+        reservation = order["reservation"]
+        total_tax += reservation["tax"]
+        total_deposit += reservation["deposit"]
+        total_charge += reservation["charge"]
+    if task['type'] == "pickup":
+        charge = "" #"Your deposit will be returned at pickup."
+        clause = """
+            Please make sure each item is in a clean and usable state upon pickup,
+            charges may be applied otherwise.
+            """
+    else:
+        total = round(total_tax + total_deposit + total_charge, 2)
+        charge = f"Total due at dropoff: ${total}"
+        clause = ""
+    frame_data["conclusion"] = f"""
+            {charge}
+        </p>
+        <p>
+            We will be sending you a text from our Hubbub phone number (929) 244-0748‬ when we are on
+            our way to you. Feel free to text or call us at that number with any updates or changes
+            on the day of {task['type']}.
+        </p>
+        <p>
+            Please be prompt, as a $5 {task['type']} attempt charge will be made if you do not show
+            up after 30 minutes. {clause}
+        </p>
+        <p>
+            Let us know if anything looks incorrect with the above information or if you have any questions!
+        """
+    email_data = {}
+    email_data["subject"] = f"[Hubbub] Updating your {task['type'].capitalize()} Time"
     email_data["to"] = (task['renter']['email'], "hubbubcu@gmail.com")
     email_data["body"] = email_builder(frame_data)
     email_data["error"] = "TASK-TIME"

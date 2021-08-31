@@ -8,7 +8,8 @@ from blubber_orm import Items, Details, Calendars
 from blubber_orm import Dropoffs, Pickups, Logistics
 from blubber_orm import Addresses
 
-from server.tools.build import get_task_time_email, get_task_confirmation_email, send_async_email
+from server.tools.build import get_task_time_email, update_task_time_email
+from server.tools.build import get_task_confirmation_email, send_async_email
 from server.tools.build import create_task, complete_task
 
 from server.tools.settings import login_required
@@ -22,6 +23,7 @@ CORS(bp,
 )
 
 @bp.get('/tasks')
+@login_required
 def tasks():
     #TODO: return some json object of dropoffs/pickups which need to be made
     all_dropoffs = Dropoffs.get_all()
@@ -58,8 +60,15 @@ def set_task_time():
             "renter_id": task["logistics"]["renter_id"]
         }
         update_time = { "chosen_time": chosen_time }
+        logistics = Logistics.get(logistics_keys)
+        if logistics.chosen_time: is_chosen_time = True
+        else: is_chosen_time = False
+
         Logistics.set(logistics_keys, update_time)
-        email_data = get_task_time_email(task, chosen_time)
+        if is_chosen_time:
+            email_data = update_task_time_email(task, chosen_time)
+        else:
+            email_data = get_task_time_email(task, chosen_time)
         send_async_email.apply_async(kwargs=email_data)
         #TODO: send an email with the chosen time to parties involved
         return {"flashes": [f"The time you chose, {chosen_time_json} for {task['type']} on {task['task_date']} has been set successfully."]}, 200
@@ -105,7 +114,7 @@ def complete_task_dropoff():
         for order_dict in task["orders"]:
             order = Orders.get(order_dict["id"])
             response = complete_task(order, dropoff)
-            #TODO: youre thing was dropoffed
+            #TODO: youre thing was dropped off
             if response["is_valid"] == False:
                 return {"flashes": [response["message"]]}, 406
 
@@ -147,7 +156,7 @@ def complete_task_pickup():
         for order_dict in task["orders"]:
             order = Orders.get(order_dict["id"])
             response = complete_task(order, pickup, address)
-            #TODO: youre thing was pickuped
+            #TODO: youre thing was picked up
             if response["is_valid"] == False:
                 return {"flashes": [response["message"]]}, 406
 

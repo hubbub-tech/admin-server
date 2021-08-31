@@ -1,6 +1,7 @@
 from .create import create_task
 
 from .emails import get_task_time_email
+from .emails import update_task_time_email
 from .emails import get_task_confirmation_email
 
 from .forms import validate_login
