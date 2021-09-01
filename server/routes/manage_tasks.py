@@ -30,13 +30,13 @@ def tasks():
     all_pickups = Pickups.get_all()
     tasks = []
     for dropoff in all_dropoffs:
-        if dropoff.dropoff_date > date.today():
+        if dropoff.dropoff_date >= date.today():
             task = create_task(dropoff=dropoff)
             if task["is_complete"] == False:
                 tasks.append(task)
 
     for pickup in all_pickups:
-        if pickup.pickup_date > date.today():
+        if pickup.pickup_date >= date.today():
             task = create_task(pickup=pickup)
             if task["is_complete"] == False:
                 tasks.append(task)
@@ -80,7 +80,7 @@ def task_dropoff(order_id):
     order = Orders.get(order_id)
     dropoff = Dropoffs.by_order(order)
     if dropoff:
-        if dropoff.dropoff_date > date.today():
+        if dropoff.dropoff_date >= date.today():
             task = create_task(dropoff=dropoff)
             return {"task": task}
     return {"flashes": ["This task is not ready to complete."]}, 406
@@ -91,7 +91,7 @@ def task_pickup(order_id):
     order = Orders.get(order_id)
     pickup = Pickups.by_order(order)
     if pickup:
-        if pickup.pickup_date > date.today():
+        if pickup.pickup_date >= date.today():
             task = create_task(pickup=pickup)
             return {"task": task}
     return {"flashes": ["This task is not ready to complete."]}, 406
