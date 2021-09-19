@@ -1,4 +1,25 @@
+from blubber_orm import Orders, Users, Items
 from datetime import datetime, date, timedelta
+
+def get_pickup_schedule_reminder(renter, orders):
+    frame_data = {}
+    frame_data["preview"] = f"Remember to schedule a pickup for your rental(s) - "
+    frame_data["user"] = renter.name
+    frame_data["introduction"] = f"""
+        Hey there! It seems like you still have {len(orders)} rental(s) without
+        pickups scheduled. Your rental(s) have been listed below:
+        """
+    frame_data["content"] = get_active_orders_table(orders)
+    frame_data["conclusion"] = f"""
+        You can schedule your pickup at <a href="https://www.hubbub.shop/accounts/u/orders">My Rentals</a>.
+        Alternatively, you can extend your rental for any of these items by following the same link.
+        """
+    email_data = {}
+    email_data["subject"] = f"[Hubbub] Remember to Schedule your Pickup(s)!"
+    email_data["to"] = (renter.email, "hubbubcu@gmail.com")
+    email_data["body"] = email_builder(frame_data)
+    email_data["error"] = "REMINDER-PICKUP"
+    return email_data
 
 def get_task_time_email(task, chosen_time):
     frame_data = {}
@@ -224,6 +245,28 @@ def email_builder(frame_data):
                 )
     return frame
 
+def get_active_orders_table(orders):
+    active_orders_table = f"""
+        <table>
+            <tr>
+                <th>Item</th>
+                <th>End Date</th>
+            </tr>
+        """
+        for order in orders:
+            item = Items.get(order.item_id)
+            link = f"https://www.hubbub.shop/inventory/i/id={item.id}"
+            order_end_date_str = datetime.strftime(order.ext_date_end, "%B %-d, %Y")
+            row = f"""
+                <tr>
+                    <td><a href='{link}'>{item.name}</a></td>
+                    <td>{order_end_date_str}</td>
+                </tr>
+                """
+            active_orders_table += row
+    active_orders_table += "</table>"
+    return active_orders_table
+
 def get_task_update_table(task, chosen_time):
     task_date = datetime.strptime(task["task_date"], "%Y-%m-%d").date()
     task_date_str = datetime.strftime(task_date, "%B %-d, %Y")
@@ -256,6 +299,7 @@ def get_linkable_items(task):
     item_links =[]
     items = [order["item"] for order in task["orders"]]
     for item in items:
-        item_links.append(f"<a href='https://www.hubbub.shop/inventory/i/id={item['id']}'>{item['name']}</a>")
+        link = f"https://www.hubbub.shop/inventory/i/id={item['id']}"
+        item_links.append(f"<a href='{link}'>{item['name']}</a>")
     item_names = ", ".join(item_links)
     return item_names

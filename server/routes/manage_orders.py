@@ -84,6 +84,21 @@ def order_summary(order_id):
 @bp.get('/commands/reminder/pickup')
 @login_required
 def pickup_reminder_command():
+    orders = {}
+    orders_not_picked = Orders.filter({"is_pickup_sched": False})
+    for order in orders_not_picked:
+        if date.today() < order.ext_date_end:
+            if order.res_date_start <= date.today():
+                if orders.get(order.renter_id):
+                    orders[order.renter_id].append(order)
+                else:
+                    orders[order.renter_id] = [order]
+
+    for renter_id in orders.keys():
+        renter = Users.get(renter_id)
+        rentals = orders[renter_id]
+        # email_data = get_pickup_schedule_reminder(renter, rentals)
+        # send_async_email.apply_async(kwargs=email_data)
     return {"flashes": ["Emails bulk sent!"]}, 200
 
 @bp.get('/commands/reminder/dropoff')
