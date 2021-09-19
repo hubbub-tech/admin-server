@@ -37,7 +37,6 @@ def items():
     return {"items": items}
 
 @bp.get("/item/history/id=<int:item_id>")
-@login_required
 def item_history(item_id):
     photo_url = AWS.get_url("items")
     item = Items.get(item_id)
