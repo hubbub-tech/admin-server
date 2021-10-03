@@ -139,7 +139,7 @@ def get_task_confirmation_email(task, address):
     else:
         intro = f"""
             This email is to confirm that your rental(s) ending on {task_date_str}
-            has been picked up at <strong>{address_formatted}</strong>.
+            has been picked up.
             """
         action = "return"
     frame_data["introduction"] = intro
@@ -253,17 +253,17 @@ def get_active_orders_table(orders):
                 <th>End Date</th>
             </tr>
         """
-        for order in orders:
-            item = Items.get(order.item_id)
-            link = f"https://www.hubbub.shop/inventory/i/id={item.id}"
-            order_end_date_str = datetime.strftime(order.ext_date_end, "%B %-d, %Y")
-            row = f"""
-                <tr>
-                    <td><a href='{link}'>{item.name}</a></td>
-                    <td>{order_end_date_str}</td>
-                </tr>
-                """
-            active_orders_table += row
+    for order in orders:
+        item = Items.get(order.item_id)
+        link = f"https://www.hubbub.shop/inventory/i/id={item.id}"
+        order_end_date_str = datetime.strftime(order.ext_date_end, "%B %-d, %Y")
+        row = f"""
+            <tr>
+                <td><a href='{link}'>{item.name}</a></td>
+                <td>{order_end_date_str}</td>
+            </tr>
+            """
+        active_orders_table += row
     active_orders_table += "</table>"
     return active_orders_table
 
