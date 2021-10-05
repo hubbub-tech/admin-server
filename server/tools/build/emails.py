@@ -1,6 +1,29 @@
 from blubber_orm import Orders, Users, Items
 from datetime import datetime, date, timedelta
 
+def get_shopping_cart_reminder(user):
+    frame_data = {}
+    frame_data["preview"] = f"Remember the items in your Hubbub cart! - "
+    frame_data["user"] = user.name
+    frame_data["introduction"] = f"""
+        We noticed that you still had something in your Hubbub cart! We've linked
+        them below for you :). With everything else going on in the world,
+        you shouldn't have to worry about how you’ll get the items you need.
+        """
+    frame_data["content"] = get_cart_items(user)
+    frame_data["conclusion"] = """
+        Finish checking out the items in your <a href='https://www.hubbub.shop/checkout'>cart</a>
+        before someone else gets to them! Once you complete your order through Hubbub,
+        we make the rest simple for you by delivering directly to your door! Then when
+        you're done, you can either extend the rental or we can pick it up without a hassle.
+        Thanks for renting through us, and don't hesitate to reach out with any questions :)
+        """
+    email_data = {}
+    email_data['subject'] = 'Looks like you were checking out some items on Hubbub ;)?'
+    email_data['to'] = [user.email, 'hubbubcu@gmail.com']
+    email_data['body'] = email_builder(frame_data)
+    return email_data
+
 def get_pickup_schedule_reminder(renter, orders):
     frame_data = {}
     frame_data["preview"] = f"Remember to schedule a pickup for your rental(s) - "
@@ -15,7 +38,7 @@ def get_pickup_schedule_reminder(renter, orders):
         Alternatively, you can extend your rental for any of these items by following the same link.
         """
     email_data = {}
-    email_data["subject"] = f"[Hubbub] Remember to Schedule your Pickup(s)!"
+    email_data["subject"] = f"[Hubbub] Remember to Schedule your Rental Pickup!"
     email_data["to"] = (renter.email, "hubbubcu@gmail.com")
     email_data["body"] = email_builder(frame_data)
     email_data["error"] = "REMINDER-PICKUP"
@@ -294,6 +317,27 @@ def get_task_update_table(task, chosen_time):
         </table>
         """
     return task_table
+
+def get_cart_items(user):
+    items = user.cart.contents
+    cart_items_table = f"""
+        <table>
+            <tr>
+                <th>Item</th>
+            </tr>
+        """
+    for item in items:
+        link = f"https://www.hubbub.shop/inventory/i/id={item.id}"
+        row = f"""
+            <tr>
+                <td>
+                    <a href='{link}'>{item.name}</a>
+                </td>
+            </tr>
+            """
+        cart_items_table += row
+    cart_items_table += "</table>"
+    return cart_items_table
 
 def get_linkable_items(task):
     item_links =[]

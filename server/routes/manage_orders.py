@@ -1,4 +1,6 @@
 import os
+from datetime import date, datetime, timedelta
+
 from flask import Blueprint, g, request
 from flask_cors import CORS
 from blubber_orm import Users, Carts, Items
@@ -8,6 +10,10 @@ from blubber_orm import Dropoffs, Pickups
 from server.tools.settings import login_required
 from server.tools.settings import Config, AWS
 from server.tools.settings import json_sort
+
+from server.tools.build import send_async_email
+from server.tools.build import get_shopping_cart_reminder
+from server.tools.build import get_pickup_schedule_reminder
 
 bp = Blueprint('manage_orders', __name__)
 CORS(bp,
@@ -90,31 +96,29 @@ def pickup_reminder_command():
     for order in orders_not_picked:
         if date.today() < order.ext_date_end:
             if order.res_date_start <= date.today():
-                if orders.get(order.renter_id):
-                    orders[order.renter_id].append(order)
-                else:
-                    orders[order.renter_id] = [order]
+                if order.renter_id in [1, 2, 3, 4, 5, 32, 51, 50, 49, 48, 47, 46]:
+                    if orders.get(order.renter_id):
+                        orders[order.renter_id].append(order)
+                    else:
+                        orders[order.renter_id] = [order]
 
     for renter_id in orders.keys():
         renter = Users.get(renter_id)
         rentals = orders[renter_id]
-        print(rentals)
-        print(renter.email)
-        # email_data = get_pickup_schedule_reminder(renter, rentals)
-        # send_async_email.apply_async(kwargs=email_data)
-    return {"flashes": ["Emails bulk sent!"]}, 200
+        email_data = get_pickup_schedule_reminder(renter, rentals)
+        send_async_email.apply_async(kwargs=email_data)
+    return {"flashes": ["Pickup emails have been bulk sent!"]}, 200
 
 @bp.get('/commands/reminder/dropoff')
 @login_required
 def dropoff_reminder_command():
-    return {"flashes": ["Emails bulk sent!"]}, 200
+    return {"flashes": ["Dropoff emails have been bulk sent!"]}, 200
 
 @bp.get('/commands/reminder/shopping')
 @login_required
 def shopping_reminder_command():
-    shoppers = [] # Carts.get_shoppers()
+    shoppers = Carts.get_shoppers()
     for shopper in shoppers:
-        print(shopper.name)
-        # email_data = get_shopping_cart_reminder(shopper)
-        # send_async_email.apply_async(kwargs=email_data)
-    return {"flashes": ["Emails bulk sent!"]}, 200
+        email_data = get_shopping_cart_reminder(shopper)
+        send_async_email.apply_async(kwargs=email_data)
+    return {"flashes": ["Shopping emails have been bulk sent!"]}, 200
