@@ -96,11 +96,10 @@ def pickup_reminder_command():
     for order in orders_not_picked:
         if date.today() < order.ext_date_end:
             if order.res_date_start <= date.today():
-                if order.renter_id in [1, 2, 3, 4, 5, 32, 51, 50, 49, 48, 47, 46]:
-                    if orders.get(order.renter_id):
-                        orders[order.renter_id].append(order)
-                    else:
-                        orders[order.renter_id] = [order]
+                if orders.get(order.renter_id):
+                    orders[order.renter_id].append(order)
+                else:
+                    orders[order.renter_id] = [order]
 
     for renter_id in orders.keys():
         renter = Users.get(renter_id)
