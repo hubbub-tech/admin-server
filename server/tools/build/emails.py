@@ -1,6 +1,66 @@
 from blubber_orm import Orders, Users, Items
 from datetime import datetime, date, timedelta
 
+def get_we_miss_you_email(user):
+    discount = "20%"
+    
+    frame_data = {}
+    frame_data["preview"] = f"Hubbub hasn't been the same since you left :'( - "
+    frame_data["user"] = user.name
+    frame_data["introduction"] = f"""
+        It's been so long since we've seen you! We know life get's busy, and
+        we want to be there for you.
+        """
+    frame_data["content"] = f"""
+        <p>
+            We want to offer you {discount} off the next item you order. We're so
+            happy that you gave us a chance by signing up, and we want to follow
+            through on the amazing experience that we promised to you.
+        </p>
+        """
+    frame_data["conclusion"] = """
+        Hopefully this gift will help you and save some time and money. We would also
+        love to receive your feedback! Tell us how we can improve Hubbub through this
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSe5gWyZ6XtGYhMk8n_pPbxVtt8_YhEh139BTRydbF4XCkVHJg/viewform">anonymous feedback form</a>.
+        Check out the <a href='https://www.hubbub.shop/inventory'>website</a> for the latest listings,
+        and as always, you can reach out with questions :)
+        """
+    email_data = {}
+    email_data['subject'] = f"Hey {user.name}, we miss you @Hubbub!"
+    email_data['to'] = [user.email, 'hubbubcu@gmail.com']
+    email_data['body'] = email_builder(frame_data)
+    return email_data
+
+def get_referral_offer_email(user):
+    amount = "$10"
+
+    frame_data = {}
+    frame_data["preview"] = f"Refer a friend to rent and get {amount} from Hubbub! - "
+    frame_data["user"] = user.name
+    frame_data["introduction"] = f"""
+        You've been with Hubbub for a while now, and we want to reward you for that!
+        For anyone you refer to Hubbub who places a new rental order, we want to send
+        you {amount} over Venmo (CashApp, Zelle, etc)!
+        """
+    frame_data["content"] = f"""
+        <p>
+            Just ask them to note YOU, {user.name}, as their referral when they
+            schedule the dropoff of their rental. After that, you can expect to
+            receive your {amount} reward through your payment app of choice!
+        </p>
+        """
+    frame_data["conclusion"] = """
+        We’ll be keeping this offer valid through the end of June 2021 to hopefully
+        help you and your friends save time and money! In the meantime, check out the
+        <a href='https://www.hubbub.shop/inventory'>website</a> for the latest listings!
+        And as always, you can reach out with questions :)
+        """
+    email_data = {}
+    email_data['subject'] = f"Hey {user.name}, get {amount} from Hubbub :)!"
+    email_data['to'] = [user.email, 'hubbubcu@gmail.com']
+    email_data['body'] = email_builder(frame_data)
+    return email_data
+
 def get_shopping_cart_reminder(user):
     frame_data = {}
     frame_data["preview"] = f"Remember the items in your Hubbub cart! - "
