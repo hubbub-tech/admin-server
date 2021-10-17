@@ -5,7 +5,7 @@ def complete_task(order, task, address=None):
     is_valid = False
     message = f"The task on order #{order.id} has failed."
     if isinstance(task, Dropoffs):
-        Dropoffs.mark_as_delivered(order)
+        order.complete_dropoff()
         Items.set(order.item_id, {
             "address_num": task.logistics.address.num,
             "address_street": task.logistics.address.street,
@@ -17,7 +17,7 @@ def complete_task(order, task, address=None):
     elif isinstance(task, Pickups):
         #TODO: to where the courier is taking it.
         if address:
-            Pickups.mark_as_collected(order)
+            order.complete_pickup()
             Items.set(order.item_id, {
                 "address_num": address.num,
                 "address_street": address.street,

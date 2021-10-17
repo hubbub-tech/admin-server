@@ -28,7 +28,7 @@ def create_task(dropoff=None, pickup=None):
                 order_to_dict["item"]["details"] = item.details.to_dict()
                 order_to_dict["reservation"] = order.reservation.to_dict()
                 task["orders"].append(order_to_dict)
-                if Dropoffs.dt_completed(order) is None:
+                if order.dt_dropoff_completed is None:
                     task["is_complete"] = False
         else:
             raise Exception("ERROR: why is there a dropoff without an order?")
@@ -54,7 +54,7 @@ def create_task(dropoff=None, pickup=None):
                 order_to_dict["item"]["details"] = item.details.to_dict()
                 order_to_dict["reservation"] = order.reservation.to_dict()
                 task["orders"].append(order_to_dict)
-                if Pickups.dt_completed(order) is None:
+                if order.dt_pickup_completed is None:
                     task["is_complete"] = False
         else:
             raise Exception("ERROR: why is there a dropoff without an order?")
