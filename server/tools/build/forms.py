@@ -13,7 +13,7 @@ def validate_login(form_data):
         loaded_user, = loaded_user
         if not check_password_hash(loaded_user.password, form_data["password"]):
             message = "Sorry, invalid password and email combination."
-        elif not Users.search_courier(loaded_user):
+        elif not loaded_user.is_courier:
             message = "Sorry, you're not authorized to be a courier at the moment."
         else:
             is_valid = True
