@@ -6,6 +6,7 @@ from src.models import Orders
 from src.models import Items
 from src.models import Calendars
 from src.models import Addresses
+from src.models import Logistics
 
 from src.utils.settings import aws_config
 from src.utils.settings import CODE_2_OK
@@ -26,6 +27,7 @@ def task_feed():
         order_ids = task.get_order_ids()
         courier_ids = task.get_courier_ids()
 
+        orders_to_dict = []
         for order_id in order_ids:
             order = Orders.get({ "id": order_id })
             item = Items.get({ "id": order.item_id })
@@ -49,10 +51,10 @@ def task_feed():
         to_address = Addresses.get(to_query_address)
         from_address = Addresses.get(from_query_address)
 
+        task_to_dict = task.to_dict()
         task_to_dict["to_addr_formatted"] = to_address.formatted
         task_to_dict["from_addr_formatted"] = from_address.formatted
 
-        task_to_dict = task.to_dict()
         task_to_dict["sender"] = sender.to_dict()
         task_to_dict["receiver"] = receiver.to_dict()
         task_to_dict["orders"] = orders_to_dict

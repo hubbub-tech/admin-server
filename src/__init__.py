@@ -13,7 +13,8 @@ def create_app(config_object=FlaskConfig()):
     from .utils.settings import celery
     celery.conf.update(app.config)
 
-    from .routes import auth
+    from .routes import auth, tasks
     app.register_blueprint(auth)
+    app.register_blueprint(tasks)
 
     return app
