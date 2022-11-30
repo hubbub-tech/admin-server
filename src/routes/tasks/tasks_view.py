@@ -8,7 +8,7 @@ from src.models import Calendars
 from src.models import Addresses
 
 from src.utils.settings import aws_config
-from src.utils.settings import CODE_2_OK
+from src.utils.settings import CODE_2_OK, CODE_4_NOT_FOUND
 
 
 bp = Blueprint("view", __name__)
@@ -17,6 +17,11 @@ bp = Blueprint("view", __name__)
 @bp.get("/task/<int:logistics_id>")
 def view_task(logistics_id):
     task = Logistics.get({ "id": logistics_id })
+
+    if task.is_canceled:
+        error = "Looks like this order has been canceled."
+        response = make_response({ "message": error }, CODE_4_NOT_FOUND)
+        return response
 
     order_ids = task.get_order_ids()
     courier_ids = task.get_courier_ids()

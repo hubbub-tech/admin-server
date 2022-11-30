@@ -6,7 +6,7 @@ from src.models import Orders
 from src.models import Items
 from src.models import Calendars
 from src.models import Addresses
-from src.models import Logistics
+from src.models import Logistics, Timeslots
 
 from src.utils.settings import aws_config
 from src.utils.settings import CODE_2_OK
@@ -17,7 +17,7 @@ bp = Blueprint("feed", __name__)
 @bp.get("/tasks/feed")
 def task_feed():
 
-    tasks = Logistics.get_all()
+    tasks = Logistics.filter({ "is_canceled": False })
 
     tasks_to_dict = []
     for task in tasks:
@@ -26,6 +26,7 @@ def task_feed():
 
         order_ids = task.get_order_ids()
         courier_ids = task.get_courier_ids()
+        timeslots = task.get_timeslots()
 
         orders_to_dict = []
         for order_id in order_ids:
@@ -45,6 +46,23 @@ def task_feed():
 
             couriers_to_dict.append(user_to_dict)
 
+        timeslots_to_dict = []
+        for time_range in timeslots:
+            dt_range_start_index = 0
+            dt_range_end_index = 1
+
+            timeslot = Timeslots.get({
+                "logistics_id": task.id,
+                "dt_range_start": time_range[dt_range_start_index],
+                "dt_range_end": time_range[dt_range_end_index]
+            })
+
+            if timeslot.dt_range_start == datetime.min: continue
+            if timeslot.dt_range_end == datetime.min: continue
+
+            timeslot_to_dict = timeslot.to_dict()
+            timeslots_to_dict.append(timeslot_to_dict)
+
         to_query_address = task.to_query_address("to")
         from_query_address = task.to_query_address("from")
 
@@ -59,6 +77,7 @@ def task_feed():
         task_to_dict["receiver"] = receiver.to_dict()
         task_to_dict["orders"] = orders_to_dict
         task_to_dict["couriers"] = couriers_to_dict
+        task_to_dict["timeslots"] = timeslots_to_dict
 
         tasks_to_dict.append(task_to_dict)
 
