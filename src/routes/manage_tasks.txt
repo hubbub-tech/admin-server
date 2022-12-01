@@ -22,57 +22,8 @@ CORS(bp,
     supports_credentials=Config.CORS_SUPPORTS_CREDENTIALS
 )
 
-@bp.get('/tasks')
-@login_required
-def tasks():
-    #TODO: return some json object of dropoffs/pickups which need to be made
-    all_dropoffs = Dropoffs.get_all()
-    all_pickups = Pickups.get_all()
-    tasks = []
-    for dropoff in all_dropoffs:
-        if dropoff.dropoff_date >= date.today():
-            task = create_task(dropoff=dropoff)
-            if task["is_complete"] == False:
-                tasks.append(task)
 
-    for pickup in all_pickups:
-        if pickup.pickup_date >= date.today():
-            task = create_task(pickup=pickup)
-            if task["is_complete"] == False:
-                tasks.append(task)
-    json_sort(tasks, "task_date")
-    return {"tasks": tasks}
 
-@bp.post('/task/chosen-time')
-@login_required
-def set_task_time():
-    date_format = "%Y-%m-%d"
-    time_format = "%I:%M:00 %p"
-    datetime_format = "%Y-%m-%d %H:%M:%S.%f"
-    data = request.json
-    if data:
-        task = data['task']
-        chosen_time_json = data['chosenTime']
-        chosen_time = datetime.strptime(chosen_time_json, time_format).time()
-        dt_sched = datetime.strptime(task["logistics"]["dt_scheduled"], datetime_format)
-        logistics_keys = {
-            "dt_sched": dt_sched,
-            "renter_id": task["logistics"]["renter_id"]
-        }
-        update_time = { "chosen_time": chosen_time }
-        logistics = Logistics.get(logistics_keys)
-        if logistics.chosen_time: is_chosen_time = True
-        else: is_chosen_time = False
-
-        Logistics.set(logistics_keys, update_time)
-        if is_chosen_time:
-            email_data = update_task_time_email(task, chosen_time)
-        else:
-            email_data = get_task_time_email(task, chosen_time)
-        send_async_email.apply_async(kwargs=email_data)
-        #TODO: send an email with the chosen time to parties involved
-        return {"flashes": [f"The time you chose, {chosen_time_json} for {task['type']} on {task['task_date']} has been set successfully."]}, 200
-    return {"flashes": ["This task cannot be completed."]}, 406
 
 @bp.get('/task/dropoff/id=<int:order_id>')
 @login_required
