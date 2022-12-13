@@ -28,6 +28,9 @@ def task_feed():
         courier_ids = task.get_courier_ids()
         timeslots = task.get_timeslots()
 
+        task_to_dict = task.to_dict()
+        task_to_dict["dt_due"] = None
+
         orders_to_dict = []
         for order_id in order_ids:
             order = Orders.get({ "id": order_id })
@@ -38,6 +41,12 @@ def task_feed():
             order_to_dict["ext_dt_end"] = datetime.timestamp(order.ext_dt_end)
 
             orders_to_dict.append(order_to_dict)
+
+            if task_to_dict["dt_due"] is None:
+                if order.renter_id == task.receiver_id:
+                    task_to_dict["dt_due"] = datetime.timestamp(order.res_dt_start)
+                else:
+                    task_to_dict["dt_due"] = datetime.timestamp(order.ext_dt_end)
 
         couriers_to_dict = []
         for courier_id in courier_ids:
@@ -69,7 +78,6 @@ def task_feed():
         to_address = Addresses.get(to_query_address)
         from_address = Addresses.get(from_query_address)
 
-        task_to_dict = task.to_dict()
         task_to_dict["to_addr_formatted"] = to_address.formatted
         task_to_dict["from_addr_formatted"] = from_address.formatted
 

@@ -29,6 +29,9 @@ def view_task(logistics_id):
     courier_ids = task.get_courier_ids()
     timeslots = task.get_timeslots()
 
+    task_to_dict = task.to_dict()
+    task_to_dict["dt_due"] = None
+
     orders_to_dict = []
     for order_id in order_ids:
         order = Orders.get({ "id": order_id })
@@ -42,6 +45,12 @@ def view_task(logistics_id):
         order_to_dict["ext_dt_end"] = datetime.timestamp(order.ext_dt_end)
 
         orders_to_dict.append(order_to_dict)
+
+        if task_to_dict["dt_due"] is None:
+            if order.renter_id == task.receiver_id:
+                task_to_dict["dt_due"] = datetime.timestamp(order.res_dt_start)
+            else:
+                task_to_dict["dt_due"] = datetime.timestamp(order.ext_dt_end)
 
     couriers_to_dict = []
     for courier_id in courier_ids:
@@ -69,10 +78,9 @@ def view_task(logistics_id):
 
     sender = Users.get({ "id": task.sender_id })
     receiver = Users.get({ "id": task.receiver_id })
-    task_to_dict = task.to_dict()
+
     task_to_dict["sender"] = sender.to_dict()
     task_to_dict["receiver"] = receiver.to_dict()
-
 
     to_query_address = task.to_query_address("to")
     from_query_address = task.to_query_address("from")
@@ -82,6 +90,12 @@ def view_task(logistics_id):
 
     task_to_dict["to_addr_formatted"] = to_address.formatted
     task_to_dict["from_addr_formatted"] = from_address.formatted
+
+    dt_sched_eta = task.get_dt_sched_eta()
+    if isinstance(dt_sched_eta, datetime):
+        task_to_dict["dt_sched_eta"] = datetime.timestamp(dt_sched_eta)
+    else:
+        task_to_dict["dt_sched_eta"] = None
 
     data = {
         "task": task_to_dict,

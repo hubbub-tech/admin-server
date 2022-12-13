@@ -106,22 +106,38 @@ class Logistics(Models):
             return cursor.fetchall()
 
 
-    def get_eta(self):
+    def get_sched_timeslot(self):
         SQL = """
-            SELECT dt_range_start, dt_range_end
+            SELECT logistics_id, dt_range_start, dt_range_end
             FROM timeslots
             WHERE logistics_id = %s AND is_sched = %s;
             """
 
         data = (self.id, True)
 
+        sched_timeslot = (None, None, None)
         with Models.db.conn.cursor() as cursor:
             cursor.execute(SQL, data)
-            dt_eta = cursor.fetchone()
+            sched_timeslot = cursor.fetchone()
 
-            if dt_eta: dt_eta = dt_eta[0]
+        return sched_timeslot
 
-        return dt_eta
+
+    def get_dt_sched_eta(self):
+        SQL = """
+            SELECT dt_sched_eta
+            FROM timeslots
+            WHERE logistics_id = %s AND is_sched = %s;
+            """
+
+        data = (self.id, True)
+        with Models.db.conn.cursor() as cursor:
+            cursor.execute(SQL, data)
+            dt_sched_eta = cursor.fetchone()
+
+        if dt_sched_eta:
+            return dt_sched_eta[0]
+        return None
 
 
     def add_order(self, order_id: int):

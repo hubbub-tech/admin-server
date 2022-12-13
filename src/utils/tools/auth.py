@@ -1,6 +1,8 @@
 import string
 import random
+import functools
 
+from flask import request, make_response, g
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from src.models import Couriers, Users
@@ -16,7 +18,7 @@ def login_required(view):
 
         if courier_id:
             courier = Couriers.get({"courier_id": courier_id })
-            if user:
+            if courier:
                 is_authorized = verify_token(courier_session_key_hashed, courier.courier_session_key)
             else:
                 is_authorized = False
