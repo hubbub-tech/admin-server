@@ -66,8 +66,9 @@ def task_feed():
                 "dt_range_end": time_range[dt_range_end_index]
             })
 
-            if timeslot.dt_range_start <= datetime.min: continue
-            if timeslot.dt_range_end <= datetime.min: continue
+            if timeslot.dt_range_start <= datetime.timestamp(0): continue
+            if timeslot.dt_range_end <= datetime.timestamp(0): continue
+            if timeslot.dt_sched_eta <= datetime.timestamp(0): continue
 
             timeslot_to_dict = timeslot.to_dict()
             timeslots_to_dict.append(timeslot_to_dict)
