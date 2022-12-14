@@ -1,8 +1,8 @@
 from src import create_app
-#from server.tools.settings import celery
+from src.utils.settings import celery
 
-#app = create_app()
-#app.app_context().push()
+app = create_app()
+app.app_context().push()
 
 
 #!/usr/bin/env python
