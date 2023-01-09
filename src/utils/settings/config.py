@@ -1,5 +1,4 @@
 import os
-import json
 import boto3
 
 #SUPPORTING CONFIGS------------------------------
@@ -62,17 +61,21 @@ class AWSConfig:
 class SMTPConfig:
     _instance = None
     DEFAULT_SENDER = None
-    SENDGRID_APIKEY = None
+    DEFAULT_SENDER_PASSWORD = None
+    SMTP_SERVER = ''
+    SMTP_PORT = None
 
     def __init__(self):
         if SMTPConfig._instance:
             #TODO: log that this problem happened
             raise Exception("MAIL CLIENT Connection should only be created once in the app.")
         else:
-            SMTPConfig.DEFAULT_RECEIVER = os.environ["MAIL_DEFAULT_RECEIVER"]
-            SMTPConfig.DEFAULT_SENDER = os.environ["MAIL_DEFAULT_SENDER"]
-            SMTPConfig.DEFAULT_ADMIN = os.environ["MAIL_DEFAULT_ADMIN"]
-            SMTPConfig.SENDGRID_APIKEY = os.environ["SENDGRID_APIKEY"]
+            SMTPConfig.DEFAULT_ADMIN = os.getenv("MAIL_DEFAULT_ADMIN")
+            SMTPConfig.DEFAULT_RECEIVER = os.getenv("MAIL_DEFAULT_RECEIVER")
+            SMTPConfig.DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER")
+            SMTPConfig.DEFAULT_SENDER_PASSWORD = os.getenv("MAIL_DEFAULT_SENDER_PASSWORD")
+            SMTPConfig.SMTP_SERVER = os.getenv("SMTP_SERVER")
+            SMTPConfig.SMTP_PORT = int(os.getenv("SMTP_PORT"))
             SMTPConfig._instance = self
 
     @staticmethod
@@ -85,33 +88,20 @@ class SMTPConfig:
 
 class FlaskConfig:
 
-    SECRET_KEY = os.environ['SECRET_KEY']
+    SECRET_KEY = os.getenv('SECRET_KEY')
     TESTING = False
 
-    #Celery
     CORS_SUPPORTS_CREDENTIALS = True
-    CORS_ALLOW_ORIGIN = os.environ['CORS_ALLOW_ORIGIN']
-
-    CELERY_BROKER_URL = os.environ['CLOUDAMQP_URL']
-    CELERY_BROKER_APIKEY = os.environ['CLOUDAMQP_APIKEY']
-    CELERY_RESULT_BACKEND = os.environ['CELERY_RESULT_BACKEND']
-    BROKER_POOL_LIMIT = 1
-
+    CORS_ALLOW_ORIGIN = os.getenv('CORS_ALLOW_ORIGIN')
 
 
 class DevelopmentFlaskConfig:
 
-    SECRET_KEY = os.environ['SECRET_KEY']
+    SECRET_KEY = os.getenv('SECRET_KEY')
     TESTING = False
 
-    #Celery
     CORS_SUPPORTS_CREDENTIALS = True
-    CORS_ALLOW_ORIGIN = os.environ['CORS_ALLOW_ORIGIN']
-
-    CELERY_BROKER_URL = os.environ['CLOUDAMQP_URL']
-    CELERY_RESULT_BACKEND = os.environ['CELERY_RESULT_BACKEND']
-    BROKER_POOL_LIMIT = 1
-
+    CORS_ALLOW_ORIGIN = os.getenv('CORS_ALLOW_ORIGIN')
 
 
 class TestFlaskConfig:
@@ -121,9 +111,5 @@ class TestFlaskConfig:
 
     CORS_SUPPORTS_CREDENTIALS = True
     CORS_ALLOW_ORIGIN = 'http://localhost:3000'
-
-    CELERY_BROKER_URL = 'amqp://localhost'
-    CELERY_RESULT_BACKEND = 'rpc://localhost'
-    BROKER_POOL_LIMIT = 1
 
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}

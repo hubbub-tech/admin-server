@@ -4,7 +4,6 @@ from flask import Blueprint, make_response, request
 from src.models import Users
 from src.models import Orders
 from src.models import Items
-from src.models import Calendars
 from src.models import Addresses
 from src.models import Logistics, Timeslots
 
@@ -38,6 +37,7 @@ def task_feed():
 
             order_to_dict = order.to_dict()
             order_to_dict["item"] = item.to_dict()
+            order_to_dict["item"]["image_url"] = aws_config.get_base_url() + f"/items/{item.id}.jpg"
             order_to_dict["ext_dt_end"] = datetime.timestamp(order.ext_dt_end)
 
             orders_to_dict.append(order_to_dict)
@@ -66,6 +66,8 @@ def task_feed():
                 "dt_range_end": time_range[dt_range_end_index]
             })
 
+            # This lines are correcting for gaps in the data where some timeslots
+            # have the correct time range but the associated dates don't make sense... < Jan 1, 1970.
             if timeslot.dt_range_start <= datetime.fromtimestamp(0): continue
             if timeslot.dt_range_end <= datetime.fromtimestamp(0): continue
 
@@ -87,8 +89,13 @@ def task_feed():
         task_to_dict["couriers"] = couriers_to_dict
         task_to_dict["timeslots"] = timeslots_to_dict
 
+        dt_sched_eta = task.get_dt_sched_eta()
+
+        if dt_sched_eta is None: task_to_dict["dt_sched_eta"] = None
+        else: task_to_dict["dt_sched_eta"] = datetime.timestamp(dt_sched_eta)
+
         tasks_to_dict.append(task_to_dict)
 
     data = { "tasks": tasks_to_dict }
-    response = make_response(data, 200)
+    response = make_response(data, CODE_2_OK)
     return response
