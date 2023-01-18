@@ -9,7 +9,8 @@ def create_app(config_object=FlaskConfig()):
     # Flask Config
     app.config.from_object(config_object)
 
-    from .routes import auth, tasks, orders
+    from .routes import auth, tasks, orders, main
+    app.register_blueprint(main)
     app.register_blueprint(auth)
     app.register_blueprint(tasks)
     app.register_blueprint(orders)
