@@ -5,7 +5,7 @@ from src.models import Users
 
 from src.utils import validate_login
 from src.utils import login_courier
-from src.utils import gen_token, verify_token
+from src.utils import gen_token
 
 from src.utils.settings import (
     CODE_2_OK,

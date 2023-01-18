@@ -1,0 +1,1 @@
+from .orders_cancel_confirm import get_cancellation_email

@@ -216,3 +216,28 @@ class Orders(Models):
             total_deposit += sum(ext_deposits)
 
         return total_deposit
+
+
+    @classmethod
+    def get_ids(cls, sort_by: str=None, descending: bool=False):
+        "'sort_by' should be an attribute of the class."
+
+        SQL = f"""
+            SELECT id
+            FROM {cls.table_name}
+            """
+
+        if sort_by:
+            attribute_error = f"'sort_by' argument is not an attribute of {cls.table_name}"
+            assert sort_by in cls._get_attributes(), attribute_error
+
+            if descending: order_direction = 'DESC'
+            else: order_direction = 'ASC'
+
+            SQL += f"ORDER BY {sort_by} {order_direction}"
+
+        with Models.db.conn.cursor() as cursor:
+            cursor.execute(SQL)
+            ids = cursor.fetchall()
+            ids = [_id for id_t in ids for _id in id_t]
+            return ids

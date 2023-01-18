@@ -1,3 +1,11 @@
-COOKIE_KEY_SESSION = "hubbubToken"
-COOKIE_KEY_USER = "hubbubId"
+TAX = 0.08875
+DEPOSIT = 0.25
+DISCOUNT = 0.35
+GRACE_LIMIT = 2
+PENALTY_LIMIT = 14
+
+PAYEE_ID = 32
+
+COOKIE_KEY_SESSION = "sessionToken"
+COOKIE_KEY_USER = "userId"
 DAYS_SERVICE_BUFFER = 2 # from datetime.now()
