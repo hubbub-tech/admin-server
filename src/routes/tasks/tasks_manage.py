@@ -49,13 +49,16 @@ def set_task_time():
         response = make_response({ "message": error }, CODE_4_NOT_FOUND)
         return response
 
-    ts_log_id, ts_dt_range_start, ts_dt_range_end = logistics.get_sched_timeslot()
-    if ts_log_id:
-        Timeslots.set({
-            "logistics_id": ts_log_id,
-            "dt_range_start": ts_dt_range_start,
-            "dt_range_end": ts_dt_range_end
-        }, { "is_sched": False, "dt_sched_eta": None })
+    timeslot_tuple = logistics.get_sched_timeslot()
+    if timeslot_tuple:
+        ts_log_id, ts_dt_range_start, ts_dt_range_end = timeslot_tuple
+
+        if ts_log_id:
+            Timeslots.set({
+                "logistics_id": ts_log_id,
+                "dt_range_start": ts_dt_range_start,
+                "dt_range_end": ts_dt_range_end
+            }, { "is_sched": False, "dt_sched_eta": None })
 
     timeslots = Timeslots.filter({ "logistics_id": logistics_id })
 
