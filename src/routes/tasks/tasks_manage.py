@@ -5,8 +5,8 @@ from src.models import Timeslots
 from src.models import Logistics
 
 from src.utils import login_required
-# from src.utils import send_async_email
-# from src.utils import set_task_time_email
+from src.utils import upload_email_data
+from src.utils import get_time_sched_email
 
 
 from src.utils.settings import (
@@ -82,8 +82,8 @@ def set_task_time():
 
         timeslot = Timeslots.insert(timeslot_data)
 
-    # email_data = set_task_time_email(task, chosen_time)
-    # send_async_email.apply_async(kwargs=email_data)
+    email_data = get_time_sched_email(logistics, dt_sched_eta)
+    upload_email_data(email_data, email_type="tasks_sched_time")
 
     time_sched_eta_str = dt_sched_eta.strftime("%H:%M")
     date_sched_eta_str = dt_sched_eta.strftime("%b %-d, %Y")

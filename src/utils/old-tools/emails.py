@@ -104,55 +104,7 @@ def get_pickup_schedule_reminder(renter, orders):
     email_data["error"] = "REMINDER-PICKUP"
     return email_data
 
-def get_task_time_email(task, chosen_time):
-    frame_data = {}
-    frame_data["preview"] = f"Your {task['type']} time has been set for {chosen_time.strftime('%I:%M:00 %p')} - "
-    frame_data["user"] = task["renter"]["name"]
-    frame_data["introduction"] = f"""
-        Thanks for submitting your availability! We have scheduled a specific time
-        for your {task['type']}. See the information below for details.
-        """
-    frame_data["content"] = get_task_update_table(task, chosen_time)
 
-    total_tax = 0
-    total_deposit = 0
-    total_charge = 0
-    for order in task["orders"]:
-        reservation = order["reservation"]
-        total_tax += reservation["tax"]
-        total_deposit += reservation["deposit"]
-        total_charge += reservation["charge"]
-    if task['type'] == "pickup":
-        charge = "" #"Your deposit will be returned at pickup."
-        clause = """
-            Please make sure each item is in a clean and usable state upon pickup,
-            charges may be applied otherwise.
-            """
-    else:
-        total = round(total_tax + total_deposit + total_charge, 2)
-        charge = f"Total due at dropoff: ${total}"
-        clause = ""
-    frame_data["conclusion"] = f"""
-            {charge}
-        </p>
-        <p>
-            We will be sending you a text from our Hubbub phone number (929) 244-0748‬ when we are on
-            our way to you. Feel free to text or call us at that number with any updates or changes
-            on the day of {task['type']}.
-        </p>
-        <p>
-            Please be prompt, as a $5 {task['type']} attempt charge will be made if you do not show
-            up after 30 minutes. {clause}
-        </p>
-        <p>
-            Let us know if anything looks incorrect with the above information or if you have any questions!
-        """
-    email_data = {}
-    email_data["subject"] = f"[Hubbub] Confirming your {task['type'].capitalize()} Time"
-    email_data["to"] = (task['renter']['email'], "hubbubcu@gmail.com")
-    email_data["body"] = email_builder(frame_data)
-    email_data["error"] = "TASK-TIME"
-    return email_data
 
 def update_task_time_email(task, chosen_time):
     frame_data = {}
@@ -349,34 +301,6 @@ def get_active_orders_table(orders):
         active_orders_table += row
     active_orders_table += "</table>"
     return active_orders_table
-
-def get_task_update_table(task, chosen_time):
-    task_date = datetime.strptime(task["task_date"], "%Y-%m-%d").date()
-    task_date_str = datetime.strftime(task_date, "%B %-d, %Y")
-
-    item_names = get_linkable_items(task)
-
-    task_table = f"""
-        <table>
-            <tr>
-                <td>{task['type'].capitalize()} Date</td>
-                <td>{task_date_str}</td>
-            </tr>
-            <tr>
-                <td>{task['type'].capitalize()} Time</td>
-                <td>{chosen_time.strftime('%-I:%M %p')}</td>
-            </tr>
-            <tr>
-                <td>{task['type'].capitalize()} Address</td>
-                <td>{task['address']['num']} {task['address']['street']}, {task['address']['city']} {task['address']['state']}, {task['address']['zip_code']}</td>
-            </tr>
-            <tr>
-                <td>Item(s)</td>
-                <td>{item_names}</td>
-            </tr>
-        </table>
-        """
-    return task_table
 
 def get_cart_items(user):
     items = user.cart.contents
