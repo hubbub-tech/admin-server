@@ -18,3 +18,6 @@ from .emails import *
 from .files import get_receipt
 from .files import upload_email_data
 from .files import upload_file_from_base64
+
+# Classes
+from .agent import Agent
